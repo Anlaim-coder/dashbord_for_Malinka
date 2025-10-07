@@ -42,16 +42,55 @@ def dashboard():
     retturns_with_categories = pd.merge(returns, products, on='product_id')
     returns_category = retturns_with_categories.groupby('category').size().to_dict()
     # 7. ОСНОВНЫЕ МЕТРИКИ
+   # 7. ОСНОВНЫЕ МЕТРИКИ
     total_sales = sales['quantity'].sum()
     total_returns = len(returns)
     total_events = len(events)
     total_customers = len(user_segments)
     
+    # РАСЧЕТ ЧИСТОЙ ВЫРУЧКИ (плановые продажи минус возвраты)
+    # Если есть колонка 'revenue' в sales или 'planned_revenue' в ad_revenue
+    planned_revenue = sales['amount'].sum()  # или ad_revenue['planned_revenue'].sum()
+    returns_amount = returns['refund_amount'].sum()  # если есть колонка с суммой возвратов
+    net_revenue = planned_revenue - returns_amount
+    
     #обращение в поддержку
     metrics_for_support_b =customer_support.groupby('issue_type').size()
     metrics_for_support=metrics_for_support_b.to_dict()
     resolved_issues =metrics_for_support_b.groupby('resolved').size().to_dict()
+    
+    #каналы трафика
+    canal_of_traffic=traffic.groupby('channel').size().to_dict()
+    device_of_traffic=traffic.groupby('device').size().to_dict()
+    
+    #остатки на складе
+    # остатки на складе
+    inventory_ = pd.merge(inventory, products, on='product_id')
 
+    # Количество товаров по категориям
+    inventory_by_category = inventory_.groupby('category')['quantity'].sum().to_dict()
+
+    # Последнее обновление по категориям  
+    inventory_last_update = inventory_.groupby('last_update')['quantity'].sum().to_dict()
+    
+    #реклама
+    ad_revenue_ = pd.merge(ad_revenue, products, on='product_id')
+
+    # Траты по датам
+    ad_spend = ad_revenue.groupby('date')['spend'].sum().to_dict()
+
+    # Количество рекламных кампаний по категориям
+    ad_category = ad_revenue_.groupby('category').size().to_dict()
+
+    # Впечатления по категориям
+    ad_impressions = ad_revenue_.groupby('category')['impressions'].sum().to_dict()
+    
+    #ДОХОДЫ ПОТСАВЩИКОВ
+     # 8. ДОХОДЫ ПО ПОСТАВЩИКАМ (объединяем products и suppliers)
+    suppliers_revenue = pd.merge(sales, products, on='product_id')
+    suppliers_revenue = pd.merge(suppliers_revenue, suppliers, on='supplier_id')
+    revenue_by_supplier = suppliers_revenue.groupby('supplier_name')['amount'].sum().to_dict()
+    
     return render_template(
         'index.html',
         # Данные для графиков
@@ -61,6 +100,18 @@ def dashboard():
         sales_by_category=json.dumps(sales_by_category),
         customers_by_segment=json.dumps(customers_by_segment),
         returns_analysis=json.dumps(returns_analysis),
+        returns_category=json.dumps(returns_category),
+        net_revenue=json.dumps(net_revenue),
+        metrics_for_support=json.dumps(metrics_for_support),
+        resolved_issues=json.dumps(resolved_issues),
+        canal_of_traffic=json.dumps(canal_of_traffic),
+        device_of_traffic=json.dumps(device_of_traffic),
+        inventory_by_category=json.dumps(inventory_by_category),
+        inventory_last_update=json.dumps(inventory_last_update),
+        ad_spend=json.dumps(ad_spend),
+        ad_category=json.dumps(ad_category),
+        ad_impressions=json.dumps(ad_impressions),
+        revenue_by_supplier=json.dumps(revenue_by_supplier),
         
         # Основные метрики
         total_sales=total_sales,
@@ -78,5 +129,32 @@ def api_events():
     return jsonify(events.to_dict(orient='records'))
 
 if __name__ == '__main__':
+    # # Проверим какие колонки есть в ключевых таблицах
+    # print("=== КОЛОНКИ В ТАБЛИЦАХ ===")
+    # print("sales:", list(sales.columns))
+    # print("products:", list(products.columns))
+    # print("user_profiles:", list(user_segments.columns))
+    # print("returns:", list(returns.columns))
     
+    # # ПРОВЕРКА РАБОТЫ ГРУППИРОВКИ
+    # print("\n=== ПРОВЕРКА ДАННЫХ ===")
+    
+    # # Проверим продажи по дням
+    # sales['sale_date'] = pd.to_datetime(sales['transaction_date']).dt.date
+    # test_sales = sales.groupby('sale_date')['quantity'].sum()
+    # print("Продажи по дням (первые 5):")
+    # print(test_sales.head())
+    
+    # # Проверим воронку событий
+    # test_events = events.groupby('event_type').size()
+    # print("\nВоронка событий:")
+    # print(test_events)
+    
+    # # Проверим продажи по категориям
+    # sales_with_categories = pd.merge(sales, products, on='product_id')
+    # test_categories = sales_with_categories.groupby('category')['quantity'].sum()
+    # print("\nПродажи по категориям:")
+    # print(test_categories)
+    
+    # app.run(debug=True)
     app.run(debug=True)
