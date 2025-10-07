@@ -26,6 +26,7 @@ def dashboard():
     events['event_date'] = pd.to_datetime(events['event_timestamp']).dt.date
     events_by_day = events.groupby('event_date').size().to_dict()
     
+    
     # 3. ВОРОНКА СОБЫТИЙ (показы → клики → корзина → покупки)
     events_funnel = events.groupby('event_type').size().to_dict()
     
@@ -34,19 +35,25 @@ def dashboard():
     sales_by_category = sales_with_categories.groupby('category')['quantity'].sum().to_dict()
     
     # 5. СЕГМЕНТАЦИЯ КЛИЕНТОВ (из user_profiles)
-    customers_by_segment = user_profiles.groupby('segment').size().to_dict()
+    customers_by_segment = user_segments.groupby('segment').size().to_dict()
     
     # 6. ВОЗВРАТЫ (анализ из returns)
     returns_analysis = returns.groupby('return_reason').size().to_dict()
-    
+    retturns_with_categories = pd.merge(returns, products, on='product_id')
+    returns_category = retturns_with_categories.groupby('category').size().to_dict()
     # 7. ОСНОВНЫЕ МЕТРИКИ
     total_sales = sales['quantity'].sum()
     total_returns = len(returns)
     total_events = len(events)
-    total_customers = len(user_profiles)
+    total_customers = len(user_segments)
+    
+    #обращение в поддержку
+    metrics_for_support_b =customer_support.groupby('issue_type').size()
+    metrics_for_support=metrics_for_support_b.to_dict()
+    resolved_issues =metrics_for_support_b.groupby('resolved').size().to_dict()
 
     return render_template(
-        'simple_dashboard.html',
+        'index.html',
         # Данные для графиков
         sales_by_day=json.dumps(sales_by_day),
         events_by_day=json.dumps(events_by_day),
@@ -71,32 +78,5 @@ def api_events():
     return jsonify(events.to_dict(orient='records'))
 
 if __name__ == '__main__':
-    # Проверим какие колонки есть в ключевых таблицах
-    print("=== КОЛОНКИ В ТАБЛИЦАХ ===")
-    print("sales:", list(sales.columns))
-    print("products:", list(products.columns))
-    print("user_profiles:", list(user_segments.columns))
-    print("returns:", list(returns.columns))
     
-    # ПРОВЕРКА РАБОТЫ ГРУППИРОВКИ
-    print("\n=== ПРОВЕРКА ДАННЫХ ===")
-    
-    # Проверим продажи по дням
-    sales['sale_date'] = pd.to_datetime(sales['transaction_date']).dt.date
-    test_sales = sales.groupby('sale_date')['quantity'].sum()
-    print("Продажи по дням (первые 5):")
-    print(test_sales.head())
-    
-    # Проверим воронку событий
-    test_events = events.groupby('event_type').size()
-    print("\nВоронка событий:")
-    print(test_events)
-    
-    # Проверим продажи по категориям
-    sales_with_categories = pd.merge(sales, products, on='product_id')
-    test_categories = sales_with_categories.groupby('category')['quantity'].sum()
-    print("\nПродажи по категориям:")
-    print(test_categories)
-    
-    app.run(debug=True)
     app.run(debug=True)
