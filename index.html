@@ -1,10 +1,12 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Разделённый сайт</title>
-    <link rel="stylesheet" href="style/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
 </head>
 <body>
     <div class="container">
@@ -39,14 +41,47 @@
         <div class="right-content">
             <div id="home" class="content-section">
                 <h2 id="sales">Динамика продаж</h2>
-                <img src="img.png">
-                <img src="img.png">
+                  <!-- График продаж по дням -->
+        <div class="chart-container">
+            <canvas id="salesChart"></canvas>
+        </div>
+        
+        <!-- График продаж по категориям -->
+        <div class="chart-container">
+            <canvas id="categoryChart"></canvas>
+        </div>
+
+        <h2 id="products">Работа с товаром</h2>
+        
+        <!-- График остатков на складе -->
+        <div class="chart-container">
+            <canvas id="inventoryChart"></canvas>
+        </div>
+        
+        <!-- График возвратов -->
+        <div class="chart-container">
+            <canvas id="returnsChart"></canvas>
+        </div>
                 <h2 id="products">Работа с товаром</h2>
-                <img src="img.png">
-                <img src="img.png">
+                 <!-- График расходов на рекламу -->
+        <div class="chart-container">
+            <canvas id="adSpendChart"></canvas>
+        </div>
+        
+        <!-- График эффективности рекламы -->
+        <div class="chart-container">
+            <canvas id="adImpressionsChart"></canvas>
+        </div>
                 <h2 id="ads">Работа с рекламой</h2>
-                <img src="img.png">
-                <img src="img.png">
+               <!-- График сегментов клиентов -->
+        <div class="chart-container">
+            <canvas id="clientsChart"></canvas>
+        </div>
+        
+        <!-- График воронки событий -->
+        <div class="chart-container">
+            <canvas id="funnelChart"></canvas>
+        </div>
                 <h2 id="clients">Работа с клиентами</h2>
                 <img src="img.png">
                 <img src="img.png">
@@ -54,6 +89,21 @@
             </div>
         </div>
     </div>
+     <script>
+        // Данные из Flask (Python)
+        window.salesByDay = {{ sales_by_day | safe }};
+        window.salesByCategory = {{ sales_by_category | safe }};
+        window.eventsFunnel = {{ events_funnel | safe }};
+        window.inventoryByCategory = {{ inventory_by_category | safe }};
+        window.returnsAnalysis = {{ returns_analysis | safe }};
+        window.adSpend = {{ ad_spend | safe }};
+        window.adImpressions = {{ ad_impressions | safe }};
+        window.customersBySegment = {{ customers_by_segment | safe }};
+    </script>
+
+    <!-- ПОДКЛЮЧЕНИЕ charts.js -->
+    <script src="js/charts.js"></script>
+
 
     <script>
   function scrollToSection(sectionId) {
